@@ -9,6 +9,7 @@ The tool only requires **PHP 7.0+**.
 
 ```
 git clone https://github.com/geo6/itinero-routing
+cd itinero-routing/
 
 # Install Composer
 curl -sS https://getcomposer.org/installer | php
@@ -20,7 +21,7 @@ php composer.phar install
 ## Usage
 
 ```
-php validate.php --from=data/testFrom.csv --to=data/testTo.csv --api=http://localhost/belgium/
+php route.php --from=data/testFrom.csv --to=data/testTo.csv --api=http://localhost/belgium/
 ```
 
 ### Options
@@ -33,3 +34,14 @@ php validate.php --from=data/testFrom.csv --to=data/testTo.csv --api=http://loca
 | --profile   | `car`     | Routing profile used by *Itinero Routing API*                                |
 | --mode      | `fastest` | Minimize time with `fastest` value, or distance with `closest` value         |
 | --no-header | -         | Add this option if your CSV file does not contain columns name in first line |
+
+## File structure
+
+Your files must be valid CSV (Comma-separated values) files.  
+The structure is the following :
+- Longitude (*float*)
+- Latitude (*float*)
+- Identifier (*string* or *integer*)
+- Any additional information
+
+Have a look at `data/testFrom.csv` or `data/testTo.csv` if necessary.
