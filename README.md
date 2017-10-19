@@ -1,6 +1,6 @@
 # Itinero Routing
 
-The goal of this tool is to calculate routes between 2 datasets of points with *Routing API* from *Itinero* (<https://github.com/itinero/routing-api>).  
+The goal of this tool is to calculate routes between 2 datasets of points with *Routing API* from [*Itinero*](http://www.itinero.tech) : <https://github.com/itinero/routing-api>.  
 *Itinero Routing API* uses the data and geometry from [*OpenStreetMap*](https://openstreetmap.org/) !
 
 ## Install
