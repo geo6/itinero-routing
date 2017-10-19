@@ -35,7 +35,7 @@ php route.php --from=data/testFrom.csv --to=data/testTo.csv --api=http://localho
 | --mode      | `fastest` | Minimize time with `fastest` value, or distance with `closest` value         |
 | --no-header | -         | Add this option if your CSV file does not contain columns name in first line |
 
-## File structure
+### File structure
 
 Your files must be valid CSV (Comma-separated values) files.  
 The structure is the following :
