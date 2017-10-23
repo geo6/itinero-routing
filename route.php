@@ -72,7 +72,6 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
         $response_error = FALSE;
         try {
           $url = sprintf('routing?profile=%s&loc=%f,%f&loc=%f,%f&sort=true', $profile, $dataFrom[1], $dataFrom[0], $dataTo[1], $dataTo[0]);
-          //echo $cursorFrom.'   ||   '.$cursorTo.'   ||   '.$url.PHP_EOL;
           $response = $client->get($url, [
               'headers' => [
                 'Accept' => 'application/json',
