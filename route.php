@@ -6,11 +6,12 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 
-$options = getopt('', array('from:', 'to:', 'api:', 'profile::', 'mode::', 'no-header'));
+$options = getopt('', array('from:', 'to:', 'api:', 'profile::', 'mode::', 'full', 'no-header'));
 
 $profile = (isset($options['profile']) ? $options['profile'] : 'car');
 $mode = (isset($options['mode']) && in_array($options['mode'], array('closest', 'fastest')) ? $options['mode'] : 'fastest');
 $header = (isset($options['no-header']) ? !($options['no-header']) : TRUE);
+$full = (isset($options['full']) ? ($options['full']) : FALSE);
 $fileFrom = $options['from'];
 $fileTo = $options['to'];
 $api = $options['api'];
@@ -34,8 +35,10 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
   }
 
   if (($handleFrom = fopen($fileFrom, 'r')) !== FALSE && ($handleTo = fopen($fileTo, 'r')) !== FALSE) {
-    $fpResultFull = fopen($dir.'/result-full.csv', 'w');
     $fpResult = fopen($dir.'/result.csv', 'w');
+    if ($full === TRUE) {
+      $fpResultFull = fopen($dir.'/result-full.csv', 'w');
+    }
 
     while (($dataFrom = fgetcsv($handleFrom, 1000)) !== FALSE) {
       if ($header === TRUE && $cursorFrom === 0) {
@@ -66,12 +69,14 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
 
           $last = end($json->features);
 
-          $result = array_merge(
-            $dataFrom,
-            $dataTo,
-            array($mode, $last->properties->time, $last->properties->distance)
-          );
-          fputcsv($fpResultFull, $result);
+          if ($full === TRUE) {
+            $result = array_merge(
+              $dataFrom,
+              $dataTo,
+              array($mode, $last->properties->time, $last->properties->distance)
+            );
+            fputcsv($fpResultFull, $result);
+          }
 
           if ($mode === 'closest' && (is_null($min) || $last->properties->distance < $min)) {
             $min = $last->properties->distance;
@@ -110,8 +115,10 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
       $cursorFrom++;
     }
 
-    fclose($fpResultFull);
     fclose($fpResult);
+    if ($full === TRUE) {
+      fclose($fpResultFull);
+    }
   }
 }
 
