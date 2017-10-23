@@ -42,6 +42,7 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
 
     while (($dataFrom = fgetcsv($handleFrom, 1000)) !== FALSE) {
       if ($header === TRUE && $cursorFrom === 0) {
+        $columnsFrom = array_map(function ($column) { return 'from_'.$column; }, $dataFrom);
         $cursorFrom++;
         continue;
       }
@@ -52,6 +53,13 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
 
       while (($dataTo = fgetcsv($handleTo, 1000)) !== FALSE) {
         if ($header === TRUE && $cursorTo === 0) {
+          $columnsTo = array_map(function ($column) { return 'to_'.$column; }, $dataTo);
+
+          fputcsv($fpResult, array_merge($columnsFrom, $columnsTo, array('mode','distance','time')));
+          if ($full === TRUE) {
+            fputcsv($fpResultFull, array_merge($columnsFrom, $columnsTo, array('mode','distance','time')));
+          }
+
           $cursorTo++;
           continue;
         }
@@ -73,7 +81,7 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
             $result = array_merge(
               $dataFrom,
               $dataTo,
-              array($mode, $last->properties->time, $last->properties->distance)
+              array($mode, $last->properties->distance, $last->properties->time)
             );
             fputcsv($fpResultFull, $result);
           }
@@ -81,12 +89,12 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
           if ($mode === 'closest' && (is_null($min) || $last->properties->distance < $min)) {
             $min = $last->properties->distance;
             $minTo = $dataTo;
-            $minResult = array($last->properties->time, $last->properties->distance);
+            $minResult = array($last->properties->distance, $last->properties->time);
           }
           else if ($mode === 'fastest' && (is_null($min) || $last->properties->time < $min)) {
             $min = $last->properties->time;
             $minTo = $dataTo;
-            $minResult = array($last->properties->time, $last->properties->distance);
+            $minResult = array($last->properties->distance, $last->properties->time);
           }
         } catch (ClientException $e) {
           $request_error = Psr7\str($e->getResponse()); trigger_error($request_error, E_USER_ERROR);
@@ -99,7 +107,7 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
         $cursorTo++;
       }
 
-      echo $cursorFrom.'   ||   '.$dataFrom[2].'   ||   '.$minTo[2].'   ||   Time: '.$minResult[0].'  -  Distance: '.$minResult[1].PHP_EOL;
+      echo $cursorFrom.' | '.$dataFrom[2].' | '.$minTo[2].' | Distance: '.$minResult[0].' - Time: '.$minResult[1].PHP_EOL;
 
       $result = array_merge(
         $dataFrom,
