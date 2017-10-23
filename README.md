@@ -34,6 +34,7 @@ php route.php --from=data/testFrom.csv --to=data/testTo.csv --api=http://localho
 | --profile   | `car`     | Routing profile used by *Itinero Routing API*                                |
 | --mode      | `fastest` | Minimize time with `fastest` value, or distance with `closest` value         |
 | --no-header | -         | Add this option if your CSV file does not contain columns name in first line |
+| --full      | -         | Generate an additional file with all the routes calculated                   |
 
 ### File structure
 
