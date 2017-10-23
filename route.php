@@ -10,8 +10,8 @@ $options = getopt('', array('from:', 'to:', 'api:', 'profile::', 'mode::', 'full
 
 $profile = (isset($options['profile']) ? $options['profile'] : 'car');
 $mode = (isset($options['mode']) && in_array($options['mode'], array('closest', 'fastest')) ? $options['mode'] : 'fastest');
-$header = (isset($options['no-header']) ? !($options['no-header']) : TRUE);
-$full = (isset($options['full']) ? ($options['full']) : FALSE);
+$header = !(isset($options['no-header']));
+$full = (isset($options['full']));
 $fileFrom = $options['from'];
 $fileTo = $options['to'];
 $api = $options['api'];
