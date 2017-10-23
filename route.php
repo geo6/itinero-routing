@@ -32,6 +32,13 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
 
   if (!file_exists($dir) || !is_dir($dir)) {
     mkdir($dir);
+  } else {
+    $i = 1;
+    while (file_exists($dir) && is_dir($dir)) {
+      $dir = 'data/'.$fname.' ('.$i.')';
+      $i++;
+    }
+    mkdir($dir);
   }
 
   if (($handleFrom = fopen($fileFrom, 'r')) !== FALSE && ($handleTo = fopen($fileTo, 'r')) !== FALSE) {
@@ -40,30 +47,29 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
       $fpResultFull = fopen($dir.'/result-full.csv', 'w');
     }
 
-    while (($dataFrom = fgetcsv($handleFrom, 1000)) !== FALSE) {
-      if ($header === TRUE && $cursorFrom === 0) {
-        $columnsFrom = array_map(function ($column) { return 'from_'.$column; }, $dataFrom);
-        $cursorFrom++;
-        continue;
-      }
+    if ($header === TRUE && ($headerFrom = fgetcsv($handleFrom, 1000)) !== FALSE && ($headerTo = fgetcsv($handleTo, 1000)) !== FALSE) {
+      $headerFrom = array_map(function ($column) { return 'from_'.$column; }, $headerFrom);
+      $headerTo = array_map(function ($column) { return 'to_'.$column; }, $headerTo);
 
+      fputcsv($fpResult, array_merge($headerFrom, $headerTo, array('mode','distance','time')));
+      if ($full === TRUE) {
+        fputcsv($fpResultFull, array_merge($headerFrom, $headerTo, array('mode','distance','time')));
+      }
+      rewind($handleTo);
+    }
+
+    while (($dataFrom = fgetcsv($handleFrom, 1000)) !== FALSE) {
       $min = NULL;
       $minTo = NULL;
       $minResult = NULL;
 
       while (($dataTo = fgetcsv($handleTo, 1000)) !== FALSE) {
         if ($header === TRUE && $cursorTo === 0) {
-          $columnsTo = array_map(function ($column) { return 'to_'.$column; }, $dataTo);
-
-          fputcsv($fpResult, array_merge($columnsFrom, $columnsTo, array('mode','distance','time')));
-          if ($full === TRUE) {
-            fputcsv($fpResultFull, array_merge($columnsFrom, $columnsTo, array('mode','distance','time')));
-          }
-
           $cursorTo++;
           continue;
         }
 
+        $response_error = FALSE;
         try {
           $url = sprintf('routing?profile=%s&loc=%f,%f&loc=%f,%f&sort=true', $profile, $dataFrom[1], $dataFrom[0], $dataTo[1], $dataTo[0]);
           //echo $cursorFrom.'   ||   '.$cursorTo.'   ||   '.$url.PHP_EOL;
@@ -97,25 +103,41 @@ if (isset($fileFrom) && file_exists($fileFrom)) {
             $minResult = array($last->properties->distance, $last->properties->time);
           }
         } catch (ClientException $e) {
-          $request_error = Psr7\str($e->getResponse()); trigger_error($request_error, E_USER_ERROR);
+          $request = $e->getRequest();
+          $response_error = $e->getResponse();
+          echo $cursorFrom.' | '.$dataFrom[2].' | ERROR: [client] '.$request->getUri().'  '.$response_error->getStatusCode().' '.$response_error->getReasonPhrase().PHP_EOL;
         } catch (ServerException $e) {
-          $request_error = Psr7\str($e->getResponse()); trigger_error($request_error, E_USER_ERROR);
+          $request = $e->getRequest();
+          $response_error = $e->getResponse();
+          echo $cursorFrom.' | '.$dataFrom[2].' | ERROR: [server] '.$request->getUri().'  '.$response_error->getStatusCode().' '.$response_error->getReasonPhrase().PHP_EOL;
         } catch (Exception $e) {
-          $request_error = $e->getMessage(); trigger_error($request_error, E_USER_ERROR);
+          $request = $e->getRequest();
+          $response_error = $e->getResponse();
+          echo $cursorFrom.' | '.$dataFrom[2].' | ERROR: '.$request->getUri().'  '.$response_error->getStatusCode().' '.$response_error->getReasonPhrase().PHP_EOL;
         }
 
         $cursorTo++;
+
+        if ($response_error !== FALSE) {
+          $fpError = fopen($dir.'/errors.csv', 'a');
+          fputcsv($fpError, $dataFrom);
+          fclose($fpError);
+
+          break;
+        }
       }
 
-      echo $cursorFrom.' | '.$dataFrom[2].' | '.$minTo[2].' | Distance: '.$minResult[0].' - Time: '.$minResult[1].PHP_EOL;
+      if ($response_error === FALSE) {
+        echo $cursorFrom.' | '.$dataFrom[2].' | '.$minTo[2].' | Distance: '.$minResult[0].' - Time: '.$minResult[1].PHP_EOL;
 
-      $result = array_merge(
-        $dataFrom,
-        $minTo,
-        array($mode),
-        $minResult
-      );
-      fputcsv($fpResult, $result);
+        $result = array_merge(
+          $dataFrom,
+          $minTo,
+          array($mode),
+          $minResult
+        );
+        fputcsv($fpResult, $result);
+      }
 
       rewind($handleTo);
       $cursorTo = 0;
